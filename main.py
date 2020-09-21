@@ -3,7 +3,7 @@ import math
 from queue import PriorityQueue
 from ast import literal_eval
 
-WIDTH = 1000
+WIDTH = 900
 WIN = pygame.display.set_mode((WIDTH, WIDTH))
 pygame.display.set_caption("Path finding visualized")
 
@@ -16,15 +16,29 @@ BLUE = (0, 255, 0)
 PURPLE = (128, 0, 128)
 
 WHITE = (255, 255, 255)
+LIGHT_GREY = (192, 192, 192)
 GREY = (128, 128, 128)
+DARK_GREY = (64, 64, 64)
+DARKER_GREY = (16, 16, 16)
 BLACK = (0, 0, 0)
 
 map_file = "maps/main_maze.txt"
-room_graph=literal_eval(open(map_file, "r").read())
-def load_graph(self, room_graph):
-    for i in enumerate(room_graph):
-        print()
+cell_graph=literal_eval(open(map_file, "r").read())
 
+def load_graph(graph):
+    cell_dict = {}
+    for cell in graph:
+        cell_dict[cell] = graph[cell][0]
+    
+    scale = 0
+    for k, v in cell_dict.items():
+        if v[0] > scale:
+            scale = v[0]
+        if v[1] > scale:
+            scale = v[1]
+
+    print(scale)
+    return cell_dict
     """
     num_rooms = len(room_graph)
     rooms = [None] * num_rooms
@@ -65,17 +79,23 @@ class Cell:
 		self.width = width
 		self.total_rows = total_rows
 
-	def is_closed(self): return self.color == RED
-	def is_open(self): return self.color == GREEN
+	#def is_closed(self): return self.color == GREY
+	#def is_open(self): return self.color == LIGHT_GREY
 	def is_barrier(self): return self.color == BLACK
 	def is_start(self): return self.color == ORANGE
 	def is_target(self): return self.color == TURQUOISE
 
-	def set_none(self): self.color = WHITE
+	def set_none(self): self.color = DARKER_GREY
 	def set_barrier(self): self.color = BLACK
 	def set_start(self): self.color = ORANGE
-	def set_closed(self): self.color = RED
-	def set_open(self): self.color = GREEN
+	def set_closed(self):
+            if self.color[0] <= 240: self.color = (self.color[0]+16, self.color[1], self.color[2])
+            if self.color[1] <= 240: self.color = (self.color[0], self.color[1]+16, self.color[2])
+            if self.color[2] <= 240: self.color = (self.color[0], self.color[1], self.color[2]+16)
+	def set_open(self):
+            if self.color[0] <= 240: self.color = (self.color[0]+16, self.color[1], self.color[2])
+            if self.color[1] <= 240: self.color = (self.color[0], self.color[1]+16, self.color[2])
+            if self.color[2] <= 240: self.color = (self.color[0], self.color[1], self.color[2]+16)
 	def set_target(self): self.color = TURQUOISE
 	def set_path(self): self.color = PURPLE
 
@@ -159,16 +179,30 @@ def algorithm(draw, grid, start, target):
 	return False
 
 
-def set_grid(rows, width):
-	grid = []
-	gap = width // rows
-	for i in range(rows):
-		grid.append([])
-		for j in range(rows):
-			cell = Cell(i, j, gap, rows)
-			grid[i].append(cell)
+def set_grid(rows, width, preset=None):
+    grid = []
+    gap = width // rows
+    for i in range(rows):
+	    grid.append([])
+	    for j in range(rows):
+             print(i, j)
+             cell = Cell(i, j, gap, rows)
+             grid[i].append(cell)
 
-	return grid
+    
+    if preset:
+        for k, v in preset.items():
+            x = v[0][0] * 2 - 1
+            y = v[0][1] * 2 - 1
+            print(x,y)
+            grid[x][y].set_none()
+            #if k == 0 : grid[x][y].set_start()
+            if 'n' in v[1].keys(): grid[x][y+1].set_none()
+            if 's' in v[1].keys(): grid[x][y-1].set_none()
+            if 'e' in v[1].keys(): grid[x+1][y].set_none()
+            if 'w' in v[1].keys(): grid[x-1][y].set_none()
+    
+    return grid
 
 
 def draw_grid(win, rows, width):
@@ -189,7 +223,6 @@ def draw(win, grid, rows, width):
 	draw_grid(win, rows, width)
 	pygame.display.update()
 
-
 def get_clicked_pos(pos, rows, width):
 	gap = width // rows
 	y, x = pos
@@ -200,59 +233,59 @@ def get_clicked_pos(pos, rows, width):
 	return row, col
 
 
-def main(win, width):
-	ROWS = 50
-	grid = set_grid(ROWS, width)
+def main(win, width, preset = None, scale = 60):
+    ROWS = scale
+    grid = set_grid(ROWS, width, preset)
+    start = None
+    target = None
 
-	start = None
-	target = None
+    run = True
+    while run:
+	    draw(win, grid, ROWS, width)
 
-	run = True
-	while run:
-		draw(win, grid, ROWS, width)
-		for event in pygame.event.get():
-			if event.type == pygame.QUIT:
-				run = False
+	    for event in pygame.event.get():
+		    if event.type == pygame.QUIT:
+			    run = False
 
-			if pygame.mouse.get_pressed()[0]: # LEFT
-				pos = pygame.mouse.get_pos()
-				row, col = get_clicked_pos(pos, ROWS, width)
-				cell = grid[row][col]
-				print(f'[{cell.x}, {cell.y}]')
-				if not start and cell != target:
-					start = cell
-					start.set_start()
+		    if pygame.mouse.get_pressed()[0]: # LEFT
+			    pos = pygame.mouse.get_pos()
+			    row, col = get_clicked_pos(pos, ROWS, width)
+			    cell = grid[row][col]
+			    print(f'[{cell.x}, {cell.y}]')
+			    if not start and cell != target:
+				    start = cell
+				    start.set_start()
 
-				elif not target and cell != start:
-					target = cell
-					target.set_target()
+			    elif not target and cell != start:
+				    target = cell
+				    target.set_target()
 
-				elif cell != target and cell != start:
-					cell.set_none()
+			    elif cell != target and cell != start:
+				    cell.set_none()
 
-			elif pygame.mouse.get_pressed()[2]: # RIGHT
-				pos = pygame.mouse.get_pos()
-				row, col = get_clicked_pos(pos, ROWS, width)
-				cell = grid[row][col]
-				cell.set_barrier()
-				if cell == start:
-					start = None
-				elif cell == target:
-					target = None
+		    elif pygame.mouse.get_pressed()[2]: # RIGHT
+			    pos = pygame.mouse.get_pos()
+			    row, col = get_clicked_pos(pos, ROWS, width)
+			    cell = grid[row][col]
+			    cell.set_barrier()
+			    if cell == start:
+				    start = None
+			    elif cell == target:
+				    target = None
 
-			if event.type == pygame.KEYDOWN:
-				if event.key == pygame.K_SPACE and start and target:
-					for row in grid:
-						for cell in row:
-							cell.update_neighbors(grid)
+		    if event.type == pygame.KEYDOWN:
+			    if event.key == pygame.K_SPACE and start and target:
+				    for row in grid:
+					    for cell in row:
+						    cell.update_neighbors(grid)
 
-					algorithm(lambda: draw(win, grid, ROWS, width), grid, start, target)
+				    algorithm(lambda: draw(win, grid, ROWS, width), grid, start, target)
 
-				if event.key == pygame.K_c:
-					start = None
-					target = None
-					grid = set_grid(ROWS, width)
+			    if event.key == pygame.K_c:
+				    start = None
+				    target = None
+				    grid = set_grid(ROWS, width)
 
-	pygame.quit()
+    pygame.quit()
 
-main(WIN, WIDTH)
+main(WIN, WIDTH, cell_graph)
