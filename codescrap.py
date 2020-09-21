@@ -1,4 +1,8 @@
-import pygame
+
+s1 = set([1,2,3,4])
+s2 = set([1,6,7,4])
+print(s2.difference(s1))
+
 """
 
 pygame.font.init()
