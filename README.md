@@ -1,6 +1,6 @@
 # pyGame_pathfinding
 
-**Goal:** Create an app that visits every vertex of a graph with as few movements and as efficiently as possible.
+**Goal:** Create an app that visits every vertex of a graph with as few movements and as possible.
 
 ![pyGame_demo](demo/bpy_anim.gif)
 
