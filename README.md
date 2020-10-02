@@ -2,8 +2,21 @@
 
 ![pyGame_demo](demo/bpy_anim.gif)
 
-I wanted to create a maze solver that explores a maze in as few steps as possible. This led to a whole rabbit whole of problem solving and research. I'm a very visual learner so I decided to use the pyGame library to render the maze and the algorithms used to solve it.
+Goal: Create an app that visits every vertex of a graph with as few movements and as efficiently as possible.
 
-This is currently under development but completely functional using the A star path finding algorithm paired with a custom algorithm I wrote to detect dead ends and loops inside of the maze.
+How it works: The program loads the maze and itterates over vertices detecting dead ends and connecting paths leading to them to identify branches it will need to travel. All cells left are part of a circuit that it must complete to visit every part of the maze. (depending on the maze that circuit may be multiple circuits connected by 'bridges'. After the maze is processed it itterates around the circuit using the A star algorithmn and stopping at any vertex that leads to a branch of dead ends.
 
-I plan to add more GUI elements and path-finding algorithms in the future.
+Complete: 
+App functionality!
+Maze completion.
+A Star searching.
+Dead end detection.
+Loop detection. 
+
+TODO: 
+Add depth first and breadth first searching.
+Add GUI.
+Add maze upload and save.
+
+Comments:
+This project led to a whole rabbit whole of problem solving and research. I'm a very visual learner so I decided to use the pyGame library to render the maze and the algorithms used to solve it. 
