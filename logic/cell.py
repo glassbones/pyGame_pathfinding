@@ -1,19 +1,17 @@
 import pygame
 import uuid
-from ..graphics.constants import RGB
+from graphics.constants import RGB
 
 class Cell:
-    def __init__(self, row, col, width, total_rows, grid):
+    def __init__(self, row, col, grid):
         #position
         self.row = row
         self.col = col
-        self.x = row * width
-        self.y = col * width
-        self.total_rows = total_rows
+        self.x = row * grid.gap
+        self.y = col * grid.gap
         self.grid = grid
         # graphic attrs
         self.color = RGB.BLACK
-        self.width = width
         # data attrs
         self.id = None
         self.neighbors = []
@@ -43,27 +41,35 @@ class Cell:
     def set_id(self): self.id = uuid.uuid1()
     def set_is_seen(self): self.is_seen = True
     def set_is_branch(self): self.is_branch = True
-    def set_northern_neighbor(self): self.neighbors.append(self.grid[self.row - 1][self.col])
-    def set_southern_neighbor(self): self.neighbors.append(self.grid[self.row + 1][self.col])
-    def set_eastern_neighbor(self): self.neighbors.append(self.grid[self.row][self.col + 1])
-    def set_western_neighbor(self): self.neighbors.append(self.grid[self.row][self.col - 1])
+    def set_northern_neighbor(self): self.neighbors.append(self.grid.cells[self.row - 1][self.col])
+    def set_southern_neighbor(self): self.neighbors.append(self.grid.cells[self.row + 1][self.col])
+    def set_eastern_neighbor(self): self.neighbors.append(self.grid.cells[self.row][self.col + 1])
+    def set_western_neighbor(self): self.neighbors.append(self.grid.cells[self.row][self.col - 1])
     # check data attrs
-    def is_not_in_first_row(self): return not bool(self.row)
-    def is_not_in_last_row(self): return not bool(self.row - (self.total_rows - 1))
-    def is_not_in_first_column(self): return not bool(self.col)
-    def is_not_in_last_column(self): return not bool(self.row - (self.total_rows - 1))
-    def has_active_northern_neighbor(self): return not bool(self.grid[self.row - 1][self.col].is_inactive())
-    def has_active_southern_neighbor(self): return not bool(self.grid[self.row + 1][self.col].is_inactive())
-    def has_active_eastern_neighbor(self): return not bool(self.grid[self.row][self.col + 1].is_inactive())
-    def has_active_western_neighbor(self): return not bool(self.grid[self.row][self.col - 1].is_inactive())
+    def is_not_in_first_row(self): return bool(self.row)
+    def is_not_in_last_row(self): return bool(self.row - (self.grid.row_num - 1))
+    def is_not_in_first_column(self): return bool(self.col)
+    def is_not_in_last_column(self): return bool(self.col - (self.grid.row_num - 1))
+    def has_active_northern_neighbor(self):
+        if self.is_not_in_first_row(): 
+            return not bool(self.grid.cells[self.row - 1][self.col].is_inactive())
+    def has_active_southern_neighbor(self): 
+        if self.is_not_in_last_row(): 
+            return not bool(self.grid.cells[self.row + 1][self.col].is_inactive())
+    def has_active_eastern_neighbor(self): 
+        if self.is_not_in_last_column(): 
+            return not bool(self.grid.cells[self.row][self.col + 1].is_inactive())
+    def has_active_western_neighbor(self): 
+        if self.is_not_in_first_column(): 
+            return not bool(self.grid.cells[self.row][self.col - 1].is_inactive())
     def update_neighbors(self): # neighbors cannot be inactive cells
         self.neighbors = []
-        if self.is_not_in_first_row() and self.has_active_northern_neighbor(): self.set_northern_neighbor()
-        if self.is_not_in_last_row() and self.has_active_southern_neighbor(): self.set_southern_neighbor()
-        if self.is_not_in_last_column() and self.has_active_eastern_neighbor(): self.set_eastern_neighbor()
-        if self.is_not_in_first_column() and self.has_active_western_neighbor(): self.set_western_neighbor()
+        if self.has_active_northern_neighbor(): self.set_northern_neighbor()
+        if self.has_active_southern_neighbor(): self.set_southern_neighbor()
+        if self.has_active_eastern_neighbor(): self.set_eastern_neighbor()
+        if self.has_active_western_neighbor(): self.set_western_neighbor()
     # get data attrs
     def get_pos(self): return self.row, self.col
     def get_active_neighbors(self): return [neighbor for neighbor in self.neighbors if neighbor.color != RGB.BLACK]
-    def draw(self, win): pygame.draw.rect(win, self.color, (self.x, self.y, self.width, self.width))
+    def draw(self, win): pygame.draw.rect(win, self.color, (self.x, self.y, self.grid.gap, self.grid.gap))
     def __lt__(self, other): return False

@@ -1,35 +1,28 @@
+from graphics.constants import RGB
+from graphics.display import canvas
+from logic.cell import Cell
 from ast import literal_eval
-from ..graphics.constants import RGB
-from ..graphics.constants import WIN
-from .cell import Cell
-
-# hard coded map import
-map_file = "logic/data/maps/main_maze.txt"
-cell_graph=literal_eval(open(map_file, "r").read())
 
 class Grid:
-    def __init__(self, width, row_num):
+    def __init__(self, width, row_num = 60):
         self.width = width
         self.row_num = row_num
         self.gap = width // row_num
         self.cells = []
+        self.seen = set()
 
     def get_all_non_inactive_cells(self): return [cell for row in self.cells for cell in row if not cell.is_inactive()]
     def get_all_non_inactive_cell_ids(self): return [cell.id for row in self.cells for cell in row if not cell.is_inactive()]
 
-    def get_rooms_with_neighbor_count_of(self, num):
+    def get_cells_with_neighbor_count_of(self, num):
         non_inactive_cells = self.get_all_non_inactive_cells()
-        lst = []
+        for cell in non_inactive_cells: cell.update_neighbors()
+        return [cell for cell in non_inactive_cells if len(cell.neighbors) == num] 
 
-        for row in non_inactive_cells:
-            for cell in row:
-                cell.update_neighbors(graph)
-                if (cell.color != RGB.BLACK):
-                    if (len(cell.neighbors) == num):
-                        lst.append(cell)    
-        return lst
+    def load_map(self, num):
+        paths = ['logic/data/maps/main_maze.txt']
 
-    def load_map(self, map):
+        map = literal_eval(open(paths[num-1], "r").read())
         # needs overhall
         # this load method converts edges to cells for the time being :/
         for k, v in map.items():
@@ -49,52 +42,37 @@ class Grid:
         for i in range(rows):
             self.cells.append([])
             for j in range(rows):
-                cell = Cell(i, j, self.gap, rows, self)
+                cell = Cell(i, j, self)
                 self.cells[i].append(cell)
                 cell.set_id()
         # if there is a map param load that map
-        if preset: self.load_map(map)
+        if preset: self.load_map(preset)
 
     def find_branches(self):
-        prospects = self.get_rooms_with_neighbor_count_of(1)
+        prospects = self.get_cells_with_neighbor_count_of(1)
         branches = set()
         forks = set()
         # itterate prospects
-        # travel through neighbors of each room until you reach a fork
-        # each room will have step count incremented by 1
-        # if a rooms step count is equal to its neighbor count it is will be added to branches
-        # if a rooms step count is equal to its neighbors and its over 2 it will be added to prospects (these are branches within branches)
         while len(prospects) != 0:
             new_prospects = set()
             for prospect in prospects:
                 branches.add(prospect)
+                # travel through neighbors of each cell until we reach a fork
                 for neighbor in prospect.neighbors:
                     if neighbor not in branches:
+                        # each cell will have it's step count incremented by 1
                         neighbor.steps += 1
                         branches.add(neighbor)
-                        if len(neighbor.neighbors) == neighbor.steps: # and len(neighbor.neighbors) > 2:
+                        # if a cell step count is equal to its neighbor count it is will be added to branches
+                        if len(neighbor.neighbors) == neighbor.steps:
                             new_prospects.add(neighbor)
-                            #continue
+                         # if a cell step count is equal to its neighbors and its over 2 it will be added to prospects (these are branches within branches)
                         if len(neighbor.neighbors) > 2:
                             branches.remove(neighbor)
                             forks.add(neighbor)
             prospects = new_prospects 
-
-        for cell in forks:
-            cell.color = RGB.DARKER_GREY
-            
-        for cell in branches:
-            draw(win, graph, ROWS, width)
-            cell.color = RGB.DARKEST_GREY
-            cell.set_is_branch()
-        
-
-        #SO RIGHT HERE WE WANT TO RETURN BRANCES AND DRAW IT IN A MAIN METHOD OR SOMETHING
-
-
-
-
-
+        # paint out the branches
+        canvas.draw_circuit(self, forks, branches)
 
 
 #################################################################################################################

@@ -4,10 +4,12 @@ class Render:
     def __init__(self):
         self.WIDTH = 900
 
-        def create_window(self):
-            WIN = pygame.display.set_mode((self.WIDTH, self.WIDTH))
-            pygame.display.set_caption("Path finding visualized")
-            return WIN
+    def create_window(self):
+        WIN = pygame.display.set_mode((self.WIDTH, self.WIDTH))
+        pygame.display.set_caption("Path finding visualized")
+        return WIN
+    
+    def set_width(self, num): self.WIDTH = num
 
 class Color:
     def __init__(self):
